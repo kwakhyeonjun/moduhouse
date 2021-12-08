@@ -1,0 +1,144 @@
+<template>
+  <v-row justify="space-around">
+    <v-container height="100px"></v-container>
+
+    <v-col cols="20">
+      <v-form ref="form">
+        <v-text-field
+          single-line
+          outlined
+          v-model="article.subject"
+          ref="subject"
+          id="subject"
+          label="제목"
+          text-aligned="center"
+          value=""
+          height="50px"
+          style="width: 100%"
+        ></v-text-field>
+
+        <!-- v model 대신 :initValue-"text'로-->
+        <editor
+          height="600px"
+          max-width="600px"
+          id="content"
+          label="내용"
+          outlined
+          :options="options"
+          :initialValue="text"
+          ref="editor"
+          v-model="content"
+          initialEditType="wysiwyg"
+        ></editor>
+      </v-form>
+
+      <v-btn
+        plain
+        @click="onSubmit"
+        style="float: left; margin-right: 10px"
+        :class="hover ? 'text--red' : 'text--primary'"
+        >완료</v-btn
+      >
+
+      <v-btn plain @click="onReset" style="float: left">취소</v-btn>
+      <v-list-item-title></v-list-item-title>
+    </v-col>
+  </v-row>
+</template>
+<script>
+import { writeArticleFreeBoard } from "@/api/board"; //나중에 공지로 api 바꾸기
+
+export default {
+  name: "NoticeCreate",
+  data() {
+    return {
+      options: {
+        language: "ko",
+      },
+      text: "", //얘가 v-model 대신 쓰는애임!
+      article: {
+        articleno: 0,
+        subject: "",
+        content: "",
+      },
+    };
+  },
+  props: {
+    type: { type: String },
+  },
+  methods: {
+    onSubmit(event) {
+      event.preventDefault();
+      // alert(this.$refs.editor.invoke("getMarkdown"));
+      let err = true;
+      let msg = "";
+      !this.article.subject &&
+        ((msg = "제목 입력해주세요"),
+        (err = false),
+        this.$refs.subject.focus());
+      !(
+        this.$refs.editor.invoke("getMarkdown") == "" &&
+        ((msg = "내용 입력해주세요"), (err = false), this.$refs.subject.focus())
+      );
+
+      if (!err) alert(msg);
+      //    else this.type === "create" ? this.registArticle();//: this.updateArticle();
+    },
+    onReset(event) {
+      event.preventDefault();
+      this.article.articleno = 0;
+      this.article.subject = "";
+      this.article.content = "";
+      this.$router.go(-1);
+    },
+    registArticle() {
+      writeArticleFreeBoard(
+        {
+          //         userid: this.userInfo.userid,
+          subject: this.article.subject,
+          content: this.$refs.editor.invoke("getHtML"),
+          //        boardtype: "free",
+        },
+        ({ data }) => {
+          let msg = "등록 처리시 문제가 발생했습니다.";
+          if (data === "success") {
+            msg = "등록이 완료되었습니다.";
+          }
+          alert(msg);
+          this.moveList();
+        },
+        (error) => {
+          console.log(error);
+        }
+      );
+    },
+    //update
+    updateArticle() {
+      /*이름{}
+      modifyArticleFreeBoard(
+        {
+          articleno: this.article.articleno,
+          userid: this.article.userid,
+          subject: this.article.subject,
+          content: this.$refs.editor.invoke("getHTML"),
+          boardtype: "free",
+        },
+        ({ data }) => {
+          let msg = "수정 처리시 문제가 발생했습니다.";
+          if (data === "success") {
+            msg = "수정이 완료되었습니다.";
+          }
+          alert(msg);
+          // 현재 route를 /list로 변경.
+          this.$router.push({ name: "FreeBoard" });
+        },
+        (error) => {
+          console.log(error);
+        }
+      );*/
+    },
+  },
+};
+</script>
+
+<style></style>
